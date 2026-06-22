@@ -264,7 +264,8 @@ def _best_match(items: list[dict], query: str) -> dict:
             return 0.0
         if t == q:
             return 1.0
-        r = SequenceMatcher(None, q, t).ratio()
+        r = SequenceMatcher(None, q, t).ratio()\
+
         if q in t or t in q:
             r = max(r, 0.9)
         return r
@@ -627,23 +628,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.transport == "sse":
-        # FastMCP's AllowedHostsMiddleware rejects Host headers that don't match
-        # the bind address. When bound to 0.0.0.0 it only allows "localhost" —
-        # but reverse proxies (Render, Railway, etc.) send the external domain.
-        # Patch the middleware to a passthrough BEFORE mcp.run() builds the app.
-        try:
-            import mcp.server.fastmcp.transport_security as _ts
-
-            class _AllowAllHosts:
-                def __init__(self, app, **_):
-                    self.app = app
-                async def __call__(self, scope, receive, send):
-                    await self.app(scope, receive, send)
-
-            _ts.AllowedHostsMiddleware = _AllowAllHosts
-        except Exception:
-            pass
-
+        # FastMCP auto-enables DNS rebinding protection when the initial host is
+        # 127.0.0.1/localhost, locking allowed_hosts to localhost only. Behind a
+        # reverse proxy (Render, Railway, etc.) the Host header is the external
+        # domain, causing 421 errors. Disable it here using the official API.
+        from mcp.server.transport_security import TransportSecuritySettings
+        mcp.settings.transport_security = TransportSecuritySettings(
+            enable_dns_rebinding_protection=False
+        )
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.run(transport="sse")
