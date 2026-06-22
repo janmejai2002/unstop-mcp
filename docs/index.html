@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unstop MCP — Search Unstop directly from Claude</title>
+<meta name="description" content="12 tools. 5 opportunity types. Zero API keys. Find competitions, hackathons, jobs and internships on Unstop without leaving Claude.">
+<meta property="og:title" content="Unstop MCP — Search Unstop from Claude">
+<meta property="og:description" content="An MCP server that brings Unstop's live catalog into Claude. 12 tools. No setup friction.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #030712; --surface: #0f172a; --surface2: #1e293b;
+  --border: #1e293b; --primary: #8b5cf6; --primary-d: #6d28d9;
+  --glow: rgba(139,92,246,.25); --accent: #f59e0b;
+  --green: #10b981; --text: #f1f5f9; --muted: #64748b;
+  --code-bg: #0d1117; --r: 12px; --r-lg: 20px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(3,7,18,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-weight:800;font-size:1.1rem;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--primary)}
+.nav-links{display:flex;align-items:center;gap:1.75rem}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.15rem;border-radius:8px;font-size:.875rem;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-d);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-lg{padding:.75rem 1.5rem;font-size:1rem;border-radius:10px}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--primary);background:rgba(139,92,246,.08)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:7rem 1.5rem 4rem}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 65% 50% at 50% -10%,rgba(139,92,246,.18) 0%,transparent 60%),radial-gradient(ellipse 40% 35% at 85% 55%,rgba(245,158,11,.07) 0%,transparent 55%),var(--bg)}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:float 9s ease-in-out infinite}
+.orb1{width:500px;height:500px;background:rgba(139,92,246,.1);top:-150px;left:-120px}
+.orb2{width:350px;height:350px;background:rgba(245,158,11,.07);bottom:-60px;right:5%;animation-delay:-4s}
+.orb3{width:250px;height:250px;background:rgba(16,185,129,.05);top:45%;left:65%;animation-delay:-7s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-22px) scale(1.04)}}
+.hero-inner{position:relative;max-width:920px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);color:#a78bfa;padding:.35rem .9rem;border-radius:100px;font-size:.82rem;font-weight:600;margin-bottom:1.5rem}
+.badge-dot{width:6px;height:6px;background:#a78bfa;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:900;line-height:1.08;margin-bottom:1.4rem;background:linear-gradient(135deg,#f1f5f9 0%,#c4b5fd 45%,#f59e0b 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);max-width:580px;margin:0 auto 2.2rem;line-height:1.75}
+.hero-cta{display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+
+/* CODE DEMO */
+.demo-wrap{position:relative;max-width:680px;margin:0 auto}
+.demo-glow{position:absolute;inset:-1px;border-radius:calc(var(--r-lg) + 1px);background:linear-gradient(135deg,rgba(139,92,246,.4),rgba(245,158,11,.2));z-index:-1;filter:blur(1px)}
+.code-win{background:var(--code-bg);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-lg);overflow:hidden;text-align:left;box-shadow:0 30px 70px rgba(0,0,0,.6)}
+.win-bar{display:flex;align-items:center;gap:.45rem;padding:.85rem 1.1rem;background:#161b22;border-bottom:1px solid var(--border)}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#ffbd2e}.dot-g{background:#28c840}
+.win-title{color:var(--muted);font-size:.78rem;font-family:'JetBrains Mono',monospace;margin:0 auto}
+.win-body{padding:1.4rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.75}
+.you{color:#60a5fa;font-weight:600}
+.claude-name{color:#a78bfa;font-weight:600}
+.tool-call{color:#94a3b8;font-style:italic;font-size:.75rem;margin:.2rem 0 .5rem;padding-left:.5rem;border-left:2px solid var(--border)}
+.tool-call b{color:#f59e0b}
+.r1{color:#fbbf24}.r2{color:#9ca3af}.r3{color:#b45309}
+.g{color:var(--green)}.d{color:#475569}.w{color:var(--text)}
+
+/* STATS */
+.stats{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.5rem 2rem;display:flex;justify-content:center;flex-wrap:wrap;gap:0}
+.stat{text-align:center;padding:.6rem 2.2rem;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-n{display:block;font-size:1.9rem;font-weight:900;color:var(--primary);line-height:1}
+.stat-l{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+
+/* SECTIONS */
+.section{padding:5rem 2rem;max-width:1200px;margin:0 auto}
+.section-wrap{padding:5rem 0}
+.s-label{color:var(--primary);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:.6rem}
+.s-title{font-size:clamp(1.7rem,4vw,2.6rem);font-weight:800;margin-bottom:.85rem}
+.s-sub{color:var(--muted);font-size:1.05rem;max-width:560px;line-height:1.7}
+
+/* TOOLS GRID */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:.85rem;margin-top:2.8rem}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.35rem;transition:all .22s;position:relative;overflow:hidden}
+.tool-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),var(--accent));transform:scaleX(0);transform-origin:left;transition:transform .22s}
+.tool-card:hover{border-color:rgba(139,92,246,.45);transform:translateY(-2px);box-shadow:0 8px 30px rgba(139,92,246,.1)}
+.tool-card:hover::after{transform:scaleX(1)}
+.tool-icon{font-size:1.6rem;margin-bottom:.6rem;display:block}
+.tool-name{font-weight:700;font-size:.9rem;margin-bottom:.3rem;color:var(--text)}
+.tool-desc{color:var(--muted);font-size:.82rem;line-height:1.55}
+.tool-tag{display:inline-block;background:rgba(139,92,246,.1);color:#a78bfa;font-size:.68rem;padding:.18rem .55rem;border-radius:4px;margin-top:.65rem;font-family:'JetBrains Mono',monospace}
+
+/* CLIENTS */
+.clients{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap}
+.client{display:flex;align-items:center;gap:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.7rem 1.15rem;font-size:.875rem;font-weight:500;transition:border-color .2s}
+.client:hover{border-color:rgba(139,92,246,.4)}
+.client-ic{font-size:1.3rem}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2rem;margin-top:2.8rem;counter-reset:step}
+.step{position:relative;padding-left:0}
+.step-n{font-size:3.5rem;font-weight:900;color:rgba(139,92,246,.15);line-height:1;font-family:'JetBrains Mono',monospace;margin-bottom:.4rem}
+.step-title{font-weight:700;font-size:1.05rem;margin-bottom:.4rem}
+.step-desc{color:var(--muted);font-size:.875rem;line-height:1.6}
+.step-code{margin-top:.75rem;background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#94a3b8;overflow-x:auto;white-space:pre}
+
+/* PROMPTS */
+.prompts{display:grid;gap:.6rem;margin-top:2.2rem;max-width:800px}
+.prompt{display:flex;align-items:center;gap:.9rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;transition:all .2s;cursor:default}
+.prompt:hover{border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.04)}
+.prompt-ic{color:var(--primary);font-size:1.1rem;flex-shrink:0}
+.prompt-t{color:var(--text);font-size:.9rem}
+.prompt-cat{margin-left:auto;font-size:.72rem;color:var(--muted);background:var(--surface2);padding:.2rem .55rem;border-radius:4px;white-space:nowrap}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.25rem;margin-top:2.8rem}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:2rem;position:relative;transition:all .22s}
+.price-card.featured{border-color:rgba(139,92,246,.6);background:linear-gradient(160deg,rgba(139,92,246,.07) 0%,rgba(139,92,246,.02) 100%);box-shadow:0 0 0 1px rgba(139,92,246,.2),0 20px 50px rgba(139,92,246,.1)}
+.price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;font-size:.7rem;font-weight:700;padding:.28rem .9rem;border-radius:100px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.price-name{font-weight:700;font-size:1rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.price-amt{font-size:2.6rem;font-weight:900;margin:.8rem 0 .2rem;color:var(--text);line-height:1}
+.price-amt sup{font-size:1.1rem;color:var(--muted);font-weight:500;vertical-align:super}
+.price-amt .per{font-size:.95rem;color:var(--muted);font-weight:400}
+.price-desc{color:var(--muted);font-size:.85rem;margin-bottom:1.4rem;line-height:1.55}
+.price-feat{list-style:none;display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.75rem}
+.price-feat li{display:flex;align-items:flex-start;gap:.55rem;font-size:.875rem;color:var(--muted)}
+.price-feat li .ck{color:var(--green);flex-shrink:0;margin-top:.1rem}
+.price-feat li .xx{color:var(--surface2);flex-shrink:0;margin-top:.1rem}
+
+/* DEPLOY PANEL */
+.deploy-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:3rem 2.5rem;text-align:center;max-width:1200px;margin:0 auto 5rem;position:relative;overflow:hidden}
+.deploy-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent),var(--primary))}
+.deploy-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.75rem}
+.render-btn img{height:36px;vertical-align:middle}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);background:var(--surface);padding:1.75rem 2rem;text-align:center;color:var(--muted);font-size:.84rem}
+footer a{color:var(--primary);text-decoration:none}
+footer a:hover{text-decoration:underline}
+.foot-links{display:flex;gap:1.5rem;justify-content:center;margin-bottom:.75rem;flex-wrap:wrap}
+
+@media(max-width:768px){
+  .nav-links .hide-sm{display:none}
+  .stats{gap:0}
+  .stat{padding:.6rem 1.2rem;border-right:none;border-bottom:1px solid var(--border)}
+  .stat:last-child{border-bottom:none}
+  .section{padding:3rem 1.25rem}
+  .deploy-panel{padding:2rem 1.25rem;margin-bottom:3rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">⚡ <span>unstop</span>×mcp</a>
+  <div class="nav-links">
+    <a href="#tools" class="hide-sm">Tools</a>
+    <a href="#setup" class="hide-sm">Setup</a>
+    <a href="#pricing" class="hide-sm">Pricing</a>
+    <a href="https://github.com/janmejai2002/unstop-mcp" target="_blank" rel="noopener" class="hide-sm">GitHub ↗</a>
+    <a href="#deploy" class="btn btn-primary">Add to Claude →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="hero-inner">
+    <div class="badge"><span class="badge-dot"></span> Open Source · Free · No API Key</div>
+    <h1>Search Unstop<br>from inside Claude</h1>
+    <p class="sub">12 powerful tools. 5 opportunity types. 2,500+ live listings.<br>Find competitions, hackathons, jobs and internships without switching tabs.</p>
+    <div class="hero-cta">
+      <a href="#deploy" class="btn btn-primary btn-lg">🚀 Deploy Free on Render</a>
+      <a href="https://github.com/janmejai2002/unstop-mcp" target="_blank" rel="noopener" class="btn btn-outline btn-lg">★ Star on GitHub</a>
+      <a href="#setup" class="btn btn-outline btn-lg">⚡ Local Setup</a>
+    </div>
+
+    <!-- Code demo -->
+    <div class="demo-wrap">
+      <div class="demo-glow"></div>
+      <div class="code-win">
+        <div class="win-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="win-title">Claude — Unstop MCP</span>
+        </div>
+        <div class="win-body">
+          <div><span class="you">You ›</span> <span class="w">Find AI hackathons closing this week with cash prizes</span></div>
+          <br>
+          <div><span class="claude-name">Claude</span> <span class="d">— searching Unstop…</span></div>
+          <div class="tool-call"><b>find_closing_soon</b>(days=7, opportunity_type="hackathons") · <b>find_by_prize</b>(min_prize=50000)</div>
+          <div class="w">Found <span class="g">3 hackathons</span> closing within 7 days with ₹50k+ prizes:</div>
+          <br>
+          <div class="r1">🏆 StoxraHack 2026 — ₹3,15,000 prize pool</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;FinTech &amp; AI Trading Hackathon · Online</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;⏰ <span class="g">6 days left</span> · unstop.com/h/stoxrahack</div>
+          <br>
+          <div class="r2">🥈 SRCAS Hackathon 3.0 — ₹1,80,000 prize pool</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;"What's the next big idea?" · Online</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;⏰ <span style="color:#f87171">1 day left</span> · unstop.com/h/srcas</div>
+          <br>
+          <div class="r3">🥉 ROBOVANTA '26 — ₹80,000 prize pool</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;Code &amp; Build Hackathon · IIT Patna</div>
+          <div class="d">&nbsp;&nbsp;&nbsp;⏰ <span class="g">3 days left</span> · unstop.com/h/robovanta</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><span class="stat-n">157</span><span class="stat-l">Competitions</span></div>
+  <div class="stat"><span class="stat-n">59</span><span class="stat-l">Hackathons</span></div>
+  <div class="stat"><span class="stat-n">1,586</span><span class="stat-l">Jobs</span></div>
+  <div class="stat"><span class="stat-n">702</span><span class="stat-l">Internships</span></div>
+  <div class="stat"><span class="stat-n">7</span><span class="stat-l">Scholarships</span></div>
+</div>
+
+<!-- TOOLS -->
+<div class="section-wrap" id="tools">
+<div class="section">
+  <div class="s-label">12 Tools</div>
+  <div class="s-title">Everything Unstop, inside Claude</div>
+  <div class="s-sub">One MCP server covers the entire platform — browse, search, filter, and get full details on any opportunity.</div>
+  <div class="tools-grid">
+    <div class="tool-card"><span class="tool-icon">📊</span><div class="tool-name">get_platform_stats</div><div class="tool-desc">Live snapshot of open vs closed counts for all 5 opportunity types.</div><span class="tool-tag">no args needed</span></div>
+    <div class="tool-card"><span class="tool-icon">🔍</span><div class="tool-name">search_opportunities</div><div class="tool-desc">Universal search — any type, any status, optional region filter.</div><span class="tool-tag">query · type · region</span></div>
+    <div class="tool-card"><span class="tool-icon">🏆</span><div class="tool-name">search_competitions</div><div class="tool-desc">Case studies, quizzes, essay contests, coding challenges.</div><span class="tool-tag">query · online/offline</span></div>
+    <div class="tool-card"><span class="tool-icon">💻</span><div class="tool-name">search_hackathons</div><div class="tool-desc">Coding & innovation hackathons with online/offline region filter.</div><span class="tool-tag">query · region</span></div>
+    <div class="tool-card"><span class="tool-icon">💼</span><div class="tool-name">search_jobs</div><div class="tool-desc">Full-time and part-time jobs with work-type, timing, and salary filters.</div><span class="tool-tag">remote · min_salary</span></div>
+    <div class="tool-card"><span class="tool-icon">🎓</span><div class="tool-name">search_internships</div><div class="tool-desc">Internships with WFH / in-office and minimum stipend filters.</div><span class="tool-tag">wfh · min_stipend</span></div>
+    <div class="tool-card"><span class="tool-icon">🎯</span><div class="tool-name">search_scholarships</div><div class="tool-desc">Scholarships and fellowship programs across all disciplines.</div><span class="tool-tag">query · status</span></div>
+    <div class="tool-card"><span class="tool-icon">📋</span><div class="tool-name">get_opportunity_details</div><div class="tool-desc">Full record for any type: description, prizes, dates, eligibility, skills, apply link.</div><span class="tool-tag">any type</span></div>
+    <div class="tool-card"><span class="tool-icon">📌</span><div class="tool-name">get_competition_details</div><div class="tool-desc">One-call shorthand for full competition details by name.</div><span class="tool-tag">competitions</span></div>
+    <div class="tool-card"><span class="tool-icon">💰</span><div class="tool-name">find_by_prize</div><div class="tool-desc">Filter competitions & hackathons by minimum cash prize. Results sorted highest-prize first.</div><span class="tool-tag">min_prize in ₹</span></div>
+    <div class="tool-card"><span class="tool-icon">⏰</span><div class="tool-name">find_closing_soon</div><div class="tool-desc">Surface deadlines expiring within N days — sorted soonest first. Never miss a registration.</div><span class="tool-tag">days · any type</span></div>
+    <div class="tool-card"><span class="tool-icon">⚡</span><div class="tool-name">list_open_competitions</div><div class="tool-desc">Quick "what's open right now" — no query needed, newest first.</div><span class="tool-tag">limit 1–50</span></div>
+  </div>
+</div>
+</div>
+
+<!-- CLIENTS -->
+<div class="section-wrap" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+<div class="section">
+  <div class="s-label">Works everywhere</div>
+  <div class="s-title">Any MCP client</div>
+  <div class="s-sub">Install once, works across every interface that supports MCP.</div>
+  <div class="clients">
+    <div class="client"><span class="client-ic">🖥️</span> Claude Desktop</div>
+    <div class="client"><span class="client-ic">🌐</span> Claude.ai (remote connector)</div>
+    <div class="client"><span class="client-ic">⌨️</span> Claude Code CLI</div>
+    <div class="client"><span class="client-ic">🔌</span> Any MCP-compatible app</div>
+    <div class="client"><span class="client-ic">🛠️</span> MCP Inspector</div>
+  </div>
+</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section-wrap" id="setup">
+<div class="section">
+  <div class="s-label">Setup</div>
+  <div class="s-title">Running in 60 seconds</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-title">Clone &amp; install</div>
+      <div class="step-desc">One pip install — no API keys, no accounts, no configuration files.</div>
+      <div class="step-code">git clone github.com/janmejai2002/unstop-mcp
+cd unstop-mcp
+pip install -r requirements.txt</div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-title">Add to Claude Desktop</div>
+      <div class="step-desc">Paste one JSON block into claude_desktop_config.json and restart.</div>
+      <div class="step-code">{
+  "mcpServers": {
+    "unstop": {
+      "command": "python",
+      "args": ["server.py"]
+    }
+  }
+}</div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-title">Start asking</div>
+      <div class="step-desc">Claude now has live access to all of Unstop. Just ask naturally.</div>
+      <div class="step-code">You: Find AI hackathons closing this week
+      with a prize over ₹50,000
+
+Claude: Found 3 — here's the full list
+        with prizes and deadlines…</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- EXAMPLE PROMPTS -->
+<div class="section-wrap" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+<div class="section">
+  <div class="s-label">Example prompts</div>
+  <div class="s-title">Ask Claude anything about Unstop</div>
+  <div class="prompts">
+    <div class="prompt"><span class="prompt-ic">🏆</span><span class="prompt-t">What hackathons are open on Unstop right now?</span><span class="prompt-cat">hackathons</span></div>
+    <div class="prompt"><span class="prompt-ic">💰</span><span class="prompt-t">Find AI competitions with a prize pool over ₹1 lakh</span><span class="prompt-cat">find_by_prize</span></div>
+    <div class="prompt"><span class="prompt-ic">⏰</span><span class="prompt-t">Which Unstop competitions close in the next 3 days?</span><span class="prompt-cat">find_closing_soon</span></div>
+    <div class="prompt"><span class="prompt-ic">💻</span><span class="prompt-t">Show me remote Python developer jobs on Unstop</span><span class="prompt-cat">jobs · remote</span></div>
+    <div class="prompt"><span class="prompt-ic">🎓</span><span class="prompt-t">Find paid internships with at least ₹20,000/month stipend</span><span class="prompt-cat">internships</span></div>
+    <div class="prompt"><span class="prompt-ic">📋</span><span class="prompt-t">Give me full details for the Smart India Hackathon</span><span class="prompt-cat">get_details</span></div>
+    <div class="prompt"><span class="prompt-ic">📊</span><span class="prompt-t">How many jobs vs internships are open on Unstop today?</span><span class="prompt-cat">stats</span></div>
+    <div class="prompt"><span class="prompt-ic">🔍</span><span class="prompt-t">Search for blockchain hackathons online with cash prizes</span><span class="prompt-cat">hackathons</span></div>
+  </div>
+</div>
+</div>
+
+<!-- PRICING -->
+<div class="section-wrap" id="pricing">
+<div class="section">
+  <div class="s-label">Pricing</div>
+  <div class="s-title">Free forever. Hosted for convenience.</div>
+  <div class="s-sub">The core server is MIT-licensed and free. The hosted version saves you the setup time.</div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-name">Self-hosted</div>
+      <div class="price-amt">Free</div>
+      <div class="price-desc">Run it yourself on your own machine. Full control, no limits, always free.</div>
+      <ul class="price-feat">
+        <li><span class="ck">✓</span> All 12 tools</li>
+        <li><span class="ck">✓</span> All 5 opportunity types</li>
+        <li><span class="ck">✓</span> Unlimited usage</li>
+        <li><span class="ck">✓</span> MIT open source</li>
+        <li><span class="ck">✓</span> Claude Desktop + Code</li>
+      </ul>
+      <a href="https://github.com/janmejai2002/unstop-mcp" class="btn btn-ghost" style="width:100%;justify-content:center">View on GitHub →</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-badge">🌐 Remote Connector</div>
+      <div class="price-name">Hosted Free</div>
+      <div class="price-amt">Free</div>
+      <div class="price-desc">Deploy to Render in one click. Works as a Claude.ai remote connector — no local setup needed.</div>
+      <ul class="price-feat">
+        <li><span class="ck">✓</span> All 12 tools</li>
+        <li><span class="ck">✓</span> Works in Claude.ai browser</li>
+        <li><span class="ck">✓</span> Public HTTPS endpoint</li>
+        <li><span class="ck">✓</span> Render free tier (750 hrs/mo)</li>
+        <li><span class="xx">~</span> Sleeps after 15 min idle (30s wake)</li>
+      </ul>
+      <a href="https://render.com/deploy?repo=https://github.com/janmejai2002/unstop-mcp" class="btn btn-primary" style="width:100%;justify-content:center" target="_blank" rel="noopener">🚀 Deploy on Render</a>
+    </div>
+    <div class="price-card">
+      <div class="price-name">Always-On Pro</div>
+      <div class="price-amt">~<sup>₹</sup>800<span class="per">/mo</span></div>
+      <div class="price-desc">Upgrade Render to a paid instance for zero cold starts and 99.9% uptime.</div>
+      <ul class="price-feat">
+        <li><span class="ck">✓</span> Everything in Hosted Free</li>
+        <li><span class="ck">✓</span> No sleep / instant response</li>
+        <li><span class="ck">✓</span> Render Starter ($7/mo)</li>
+        <li><span class="ck">✓</span> Custom domain</li>
+        <li><span class="ck">✓</span> Ideal for team use</li>
+      </ul>
+      <a href="https://render.com/pricing" class="btn btn-ghost" style="width:100%;justify-content:center" target="_blank" rel="noopener">Render Pricing →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- DEPLOY -->
+<div id="deploy" style="padding:0 2rem">
+<div class="deploy-panel">
+  <div class="s-label" style="text-align:center">Get Started</div>
+  <h2 style="font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;margin-bottom:.75rem">Ready to add Unstop to Claude?</h2>
+  <p style="color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto">One-click deploy on Render, then paste your SSE URL into Claude.ai settings. Done.</p>
+  <div class="deploy-btns">
+    <a href="https://render.com/deploy?repo=https://github.com/janmejai2002/unstop-mcp" target="_blank" rel="noopener" class="render-btn"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"></a>
+    <a href="https://github.com/janmejai2002/unstop-mcp" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">★ Star on GitHub</a>
+  </div>
+  <p style="color:var(--muted);font-size:.8rem;margin-top:1.25rem">After deploying → <strong style="color:var(--text)">Claude.ai → Settings → Integrations → Add custom integration</strong> → paste <code style="color:var(--primary);background:rgba(139,92,246,.1);padding:.1rem .4rem;border-radius:4px">https://your-app.onrender.com/sse</code></p>
+</div>
+</div>
+
+<footer>
+  <div class="foot-links">
+    <a href="https://github.com/janmejai2002/unstop-mcp">GitHub</a>
+    <a href="https://github.com/janmejai2002/unstop-mcp/blob/main/LICENSE">MIT License</a>
+    <a href="https://unstop.com" target="_blank" rel="noopener">Unstop</a>
+    <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP Docs</a>
+    <a href="https://render.com" target="_blank" rel="noopener">Render</a>
+  </div>
+  Built with <a href="https://github.com/jlowin/fastmcp">FastMCP</a> · Data from <a href="https://unstop.com">Unstop</a> public API · Not affiliated with Unstop
+</footer>
+
+</body>
+</html>
