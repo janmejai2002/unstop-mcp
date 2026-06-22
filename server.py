@@ -36,7 +36,17 @@ def _make_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
         port=port,
     )
 
+# Default instance used by the decorators below.
 mcp = _make_mcp()
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def _health(request: Any) -> Any:
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok"})
+
+
+# ─── Constants ─────────────────────────────────────────────
 
 API_URL = "https://unstop.com/api/public/opportunity/search-result"
 
@@ -264,8 +274,7 @@ def _best_match(items: list[dict], query: str) -> dict:
             return 0.0
         if t == q:
             return 1.0
-        r = SequenceMatcher(None, q, t).ratio()\
-
+        r = SequenceMatcher(None, q, t).ratio()
         if q in t or t in q:
             r = max(r, 0.9)
         return r
@@ -288,7 +297,7 @@ def _validate(opportunity_type: str, status: str) -> str | None:
     return None
 
 
-# ─── Tools ───────────────────────────────────────────────────────────────────
+# ─── Tools ─────────────────────────────────────────────────────
 
 @mcp.tool()
 async def get_platform_stats() -> dict:
@@ -617,7 +626,7 @@ async def list_open_competitions(limit: int = 10) -> dict:
     return {"total_open": data.get("total"), "count": len(items), "competitions": [_summarize(it) for it in items]}
 
 
-# ─── Entry point ─────────────────────────────────────────────────────────────
+# ─── Entry point ─────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Unstop MCP server")
