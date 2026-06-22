@@ -627,6 +627,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.transport == "sse":
+        # FastMCP's AllowedHostsMiddleware rejects Host headers that don't match
+        # the bind address. When bound to 0.0.0.0 it only allows "localhost" —
+        # but reverse proxies (Render, Railway, etc.) send the external domain.
+        # Patch the middleware to a passthrough BEFORE mcp.run() builds the app.
+        try:
+            import mcp.server.fastmcp.transport_security as _ts
+
+            class _AllowAllHosts:
+                def __init__(self, app, **_):
+                    self.app = app
+                async def __call__(self, scope, receive, send):
+                    await self.app(scope, receive, send)
+
+            _ts.AllowedHostsMiddleware = _AllowAllHosts
+        except Exception:
+            pass
+
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.run(transport="sse")
